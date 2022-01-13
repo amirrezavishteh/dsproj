@@ -1,0 +1,16 @@
+F:\DS_Proj\DS\bin\Debug\net5.0\DS.exe
+F:\DS_Proj\DS\bin\Debug\net5.0\DS.deps.json
+F:\DS_Proj\DS\bin\Debug\net5.0\DS.runtimeconfig.json
+F:\DS_Proj\DS\bin\Debug\net5.0\DS.runtimeconfig.dev.json
+F:\DS_Proj\DS\bin\Debug\net5.0\DS.dll
+F:\DS_Proj\DS\bin\Debug\net5.0\ref\DS.dll
+F:\DS_Proj\DS\bin\Debug\net5.0\DS.pdb
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.csproj.AssemblyReference.cache
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.GeneratedMSBuildEditorConfig.editorconfig
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.AssemblyInfoInputs.cache
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.AssemblyInfo.cs
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.csproj.CoreCompileInputs.cache
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.dll
+F:\DS_Proj\DS\obj\Debug\net5.0\ref\DS.dll
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.pdb
+F:\DS_Proj\DS\obj\Debug\net5.0\DS.genruntimeconfig.cache
