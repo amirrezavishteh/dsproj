@@ -18,13 +18,59 @@ namespace DS
             this.interactions_drugs = new List<Drug>();
         }
     }
+
+    /// <summary>Not Completed</summary>
+    public class Disease
+    {
+        public string name;
+        public Disease(string name)
+        {
+            this.name = name;
+        }
+    }
     public class Pharmacy
     {
         Random Rnd = new Random();
-        public Pharmacy()
-        {}
         public List<Drug> Drugs;
+        public List<Drug> New_Drugs;
+        public Pharmacy()
+        {
+            this.Drugs = new List<Drug>();
+            this.New_Drugs = new List<Drug>();
+            using(StreamReader sr = new StreamReader("./dataset_1.txt"))
+            {
+                Drug drug;
+                string line = sr.ReadLine();
+                while(line != null)
+                {
+                    drug = new Drug(line.Split(':')[0].Trim(), double.Parse(line.Split(':')[1].Trim()));
+                    this.Drugs.Add(drug);
+                    line = sr.ReadLine();
+                }
+            }
+        }
 
+        public void Create_Drug(string name, double price) 
+        {}
+
+        public void Delete_Drug(Drug d)
+        {}
+
+        public Drug Read_Drug(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Create_Disease(string name)
+        {}
+
+        public void Delete_Disease(Disease d)
+        {}
+
+        public Disease Read_Disease(string name)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary> create a random sign, + or - , for dataset_4</summary> <returns>return a char, (+) or (-) </returns>
         public char createRnd_pos_neg_Effect() => (Rnd.Next() % 2 == 0) ? '+' : '-' ;
