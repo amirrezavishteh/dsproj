@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "F:\\DS_Proj\\DS\\DS.csproj": {}
+    "f:\\DS_Proj\\DS\\DS.csproj": {}
   },
   "projects": {
-    "F:\\DS_Proj\\DS\\DS.csproj": {
+    "f:\\DS_Proj\\DS\\DS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\DS_Proj\\DS\\DS.csproj",
+        "projectUniqueName": "f:\\DS_Proj\\DS\\DS.csproj",
         "projectName": "DS",
-        "projectPath": "F:\\DS_Proj\\DS\\DS.csproj",
+        "projectPath": "f:\\DS_Proj\\DS\\DS.csproj",
         "packagesPath": "C:\\Users\\FaraSystem\\.nuget\\packages\\",
-        "outputPath": "F:\\DS_Proj\\DS\\obj\\",
+        "outputPath": "f:\\DS_Proj\\DS\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\FaraSystem\\AppData\\Roaming\\NuGet\\NuGet.Config",
