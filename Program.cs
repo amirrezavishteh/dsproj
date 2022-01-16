@@ -10,43 +10,82 @@ namespace DS
     {
         public double price = 0;
         public string name;
-        public List<Drug> interactions_drugs;
         public Drug(string name, double price)
         {
             this.name = name;
             this.price = price;
-            this.interactions_drugs = new List<Drug>();
+        }
+        public override bool Equals(object obj)
+        {
+            var other = obj as Drug;
+            return other.name == this.name;
+        }
+
+        public override int GetHashCode()
+        {
+            int result = 0;
+            foreach (char c in this.name)
+            {
+                result += (10*result + (int)(c));
+            }
+            return result;
         }
     }
 
     /// <summary>Not Completed</summary>
     public class Disease
     {
+        public List<Drug> Positive_Effect;
+        public List<Drug> Negative_Effect;
         public string name;
         public Disease(string name)
         {
             this.name = name;
+            this.Positive_Effect = new List<Drug>();
+            this.Negative_Effect = new List<Drug>();
         }
     }
     public class Pharmacy
     {
         Random Rnd = new Random();
         public List<Drug> Drugs;
+        public List<List<string>> Drugs_Graph;
+        public Dictionary<Drug, int> Drugs_ids;
+        int last_id = 0;
         public List<Drug> New_Drugs;
         public Pharmacy()
         {
+            this.Drugs_Graph = new List<List<string>>();
+            this.Drugs_ids = new Dictionary<Drug, int>();
             this.Drugs = new List<Drug>();
-            this.New_Drugs = new List<Drug>();
             using(StreamReader sr = new StreamReader("./dataset_1.txt"))
             {
-                Drug drug;
                 string line = sr.ReadLine();
                 while(line != null)
                 {
-                    drug = new Drug(line.Split(':')[0].Trim(), double.Parse(line.Split(':')[1].Trim()));
-                    this.Drugs.Add(drug);
+                    var a = line.Split(':').Select(x => x.Trim()).ToArray();
+                    Drug d = new Drug(a[0], double.Parse(a[1]));
+                    Drugs.Add(d);
+                    this.Drugs_ids.Add(d, this.last_id);
+                    this.last_id ++;
                     line = sr.ReadLine();
                 }
+            }
+            var column = Enumerable.Range(0, this.Drugs.Count).Select(x => String.Empty).ToList();
+            for(int i = 0; i < this.Drugs.Count; i++)
+            {
+                this.Drugs_Graph.Add(column);
+            }
+        }
+
+        public void Make_Interactions()
+        {
+            using(StreamReader sr = new StreamReader("./dataset_3.txt"))
+            {
+                var line = sr.ReadLine().Split(new char[]{':', '(', ',', ')', ' '}, StringSplitOptions.RemoveEmptyEntries).ToArray();
+                int i = Drugs_ids[new Drug(line[0], 0)];
+                int j = Drugs_ids[new Drug(line[1], 0)];
+                Drugs_Graph[i][j] = line[2];
             }
         }
 
@@ -83,6 +122,8 @@ namespace DS
     {
         static void Main(string[] args)
         {
+            Pharmacy p = new Pharmacy();
+            p.Make_Interactions();
             while(true)
             {
                 System.Console.WriteLine("1. start ");
