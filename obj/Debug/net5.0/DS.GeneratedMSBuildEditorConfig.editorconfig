@@ -7,4 +7,4 @@ build_property.PublishSingleFile =
 build_property.IncludeAllContentForSelfExtract = 
 build_property._SupportedPlatformList = Android,iOS,Linux,macOS,Windows
 build_property.RootNamespace = DS
-build_property.ProjectDir = f:\DS_Proj\DS\
+build_property.ProjectDir = F:\DS_Proj\DS\
