@@ -15,82 +15,165 @@ namespace DS
             this.name = name;
             this.price = price;
         }
-        public override bool Equals(object obj)
-        {
-            var other = obj as Drug;
-            return other.name == this.name;
-        }
-
-        public override int GetHashCode()
-        {
-            int result = 0;
-            foreach (char c in this.name)
-            {
-                result += (10*result + (int)(c));
-            }
-            return result;
-        }
     }
 
-    /// <summary>Not Completed</summary>
-    public class Disease
-    {
-        public List<Drug> Positive_Effect;
-        public List<Drug> Negative_Effect;
-        public string name;
-        public Disease(string name)
-        {
-            this.name = name;
-            this.Positive_Effect = new List<Drug>();
-            this.Negative_Effect = new List<Drug>();
-        }
-    }
     public class Pharmacy
     {
+        string characters = "abcdefghijklmnopqrstuvwxyz";
         Random Rnd = new Random();
         public List<Drug> Drugs;
-        public List<List<string>> Drugs_Graph;
-        public Dictionary<Drug, int> Drugs_ids;
-        int last_id = 0;
+        public List<string> Disease;
+        public Dictionary<string, Dictionary<string, string>> Drugs_Effect_Graph;
+        public Dictionary<string, Dictionary<string, char>> Allergies_Effect_Graph;
         public List<Drug> New_Drugs;
         public Pharmacy()
         {
-            this.Drugs_Graph = new List<List<string>>();
-            this.Drugs_ids = new Dictionary<Drug, int>();
+            this.Disease = new List<string>();
+            this.Drugs_Effect_Graph = new Dictionary<string, Dictionary<string, string>>();
+            this.Allergies_Effect_Graph = new Dictionary<string, Dictionary<string, char>>();
             this.Drugs = new List<Drug>();
-            using(StreamReader sr = new StreamReader("./dataset_1.txt"))
-            {
-                string line = sr.ReadLine();
-                while(line != null)
+            #region Read Drug Data
+                using(StreamReader sr = new StreamReader("./dataset_1.txt"))
                 {
-                    var a = line.Split(':').Select(x => x.Trim()).ToArray();
-                    Drug d = new Drug(a[0], double.Parse(a[1]));
-                    Drugs.Add(d);
-                    this.Drugs_ids.Add(d, this.last_id);
-                    this.last_id ++;
-                    line = sr.ReadLine();
+                    Drug d;
+                    string line = sr.ReadLine();
+                    while(line != null)
+                    {
+                        var a = line.Split(':').Select(x => x.Trim()).ToArray();
+                        d = new Drug(a[0], double.Parse(a[1]));
+                        Drugs.Add(d);
+                        line = sr.ReadLine();
+                    }
                 }
-            }
-            var column = Enumerable.Range(0, this.Drugs.Count).Select(x => String.Empty).ToList();
-            for(int i = 0; i < this.Drugs.Count; i++)
-            {
-                this.Drugs_Graph.Add(column);
-            }
+                Dictionary<string, string> drugs_effect = new Dictionary<string, string>();
+                for(int i = 0; i< this.Drugs.Count; i++)
+                {
+                    drugs_effect.Add(this.Drugs[i].name, "");
+                }
+                for(int i = 0; i < this.Drugs.Count; i++)
+                {
+                    this.Drugs_Effect_Graph.Add(this.Drugs[i].name, drugs_effect);
+                }
+            #endregion Read Drug Data
+
+            #region Read Disease Data
+                using(StreamReader sr = new StreamReader("./dataset_2.txt"))
+                {
+                    string disease = sr.ReadLine();
+                    while(disease != null)
+                    {
+                        this.Disease.Add(disease);
+                        disease = sr.ReadLine();
+                    }
+                }
+                Dictionary<string, char> disease_effect = new Dictionary<string, char>();
+                for(int i = 0; i<this.Drugs.Count; i++)
+                {
+                    disease_effect.Add(this.Drugs[i].name, '#');
+                }
+                string dis;
+                for(int i = 0; i < this.Disease.Count; i++)
+                {
+                    dis = this.Disease[i];
+                    this.Allergies_Effect_Graph.Add(this.Disease[i], disease_effect);
+                }
+            #endregion Read Disease Data
         }
 
-        public void Make_Interactions()
+        /// <summary>Completed</summary>
+        public void Make_Drug_Interactions()
         {
+            string[] line;
             using(StreamReader sr = new StreamReader("./dataset_3.txt"))
             {
-                var line = sr.ReadLine().Split(new char[]{':', '(', ',', ')', ' '}, StringSplitOptions.RemoveEmptyEntries).ToArray();
-                int i = Drugs_ids[new Drug(line[0], 0)];
-                int j = Drugs_ids[new Drug(line[1], 0)];
-                Drugs_Graph[i][j] = line[2];
+                line = sr.ReadLine().Split(':', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+                var effected_drugs = line[1].Split(new char[]{';', ' '}, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(item => {
+                                var a = item.Split(new char[]{'(', ')', ','}, StringSplitOptions.RemoveEmptyEntries);
+                                return (drug:a[0], effect : a[1]);
+                            }).ToArray();
+                for(int i = 0; i < effected_drugs.Length; i++)
+                {
+                    this.Drugs_Effect_Graph[line[0]][effected_drugs[i].drug] = effected_drugs[i].effect;
+                }
             }
         }
 
+        /// <summary>Completed</summary>
+        public void Make_Disease_Allergies()
+        {
+            string[] line;
+            Dictionary<string, (string drug, char effect)> drugs_with_effect;
+            using(StreamReader sr = new StreamReader("./dataset_4.txt"))
+            {
+                line = sr.ReadLine().Split(':').Select(item => item.Trim()).ToArray();
+                drugs_with_effect = line[1].Split(';').Select(item => { 
+                                var a = item.Split(new char[]{'(', ')', ','}, StringSplitOptions.RemoveEmptyEntries).Where(x => x!=""&&x !=" ").ToArray();
+                                return (drug : a[0], effect : a[1][0]);
+                            }).ToDictionary(x => x.drug);
+                foreach(var item in drugs_with_effect)
+                {
+                    this.Allergies_Effect_Graph[line[0]][item.Key] = item.Value.effect;
+                }
+            }
+        }
+
+        /// <summary>Completed</summary>
         public void Create_Drug(string name, double price) 
-        {}
+        {
+            int random_count = Math.Min(this.Rnd.Next(0, 100), this.Rnd.Next(0, this.Drugs.Count));
+            Drug[] interacted_drugs = new Drug[random_count];
+            int idx = 0;
+            while(idx < random_count)
+            {
+                var drug_idx = this.Rnd.Next(this.Drugs.Count);
+                interacted_drugs[idx] = this.Drugs[drug_idx];
+                idx ++;
+            }
+            random_count = Math.Min(this.Rnd.Next(0, 100), this.Rnd.Next(0, this.Disease.Count));
+            string[] allergies_drugs = new string[random_count];
+            idx = 0;
+            while(idx < random_count)
+            {
+                var drug_idx = this.Rnd.Next(this.Disease.Count);
+                allergies_drugs[idx] = this.Disease[drug_idx];
+                idx ++;
+            }
+            Drug d = new Drug(name, price);
+            try
+            {
+                Dictionary<string, string> initialize_effects = new Dictionary<string, string>();
+                for(int i = 0; i< this.Drugs.Count; i++)
+                {
+                    initialize_effects.Add(this.Drugs[i].name, "");
+                }
+                this.Drugs_Effect_Graph.Add(name, initialize_effects);
+                foreach(var item in this.Drugs)
+                {
+                    this.Drugs_Effect_Graph[item.name].Add(name, "");
+                }
+                this.Drugs.Add(d);
+                this.New_Drugs.Add(d);
+                string effect = "Eff_";
+                for(int _ = 0; _ < 10; _++)
+                    effect += this.characters[this.Rnd.Next(27)];
+                for(int u = 0; u < interacted_drugs.Length; u++)
+                {
+                    this.Drugs_Effect_Graph[name][interacted_drugs[u].name] = effect;
+                    this.Drugs_Effect_Graph[interacted_drugs[u].name][name] = effect;
+                }
+                for(int i = 0; i < allergies_drugs.Length; i++)
+                {
+                    this.Allergies_Effect_Graph[allergies_drugs[i]][name] = this.createRnd_pos_neg_Effect();
+                }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"This drug({name}) already existed in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
 
         public void Delete_Drug(Drug d)
         {}
@@ -103,17 +186,11 @@ namespace DS
         public void Create_Disease(string name)
         {}
 
-        public void Delete_Disease(Disease d)
+        public void Delete_Disease(string d)
         {}
-
-        public Disease Read_Disease(string name)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary> create a random sign, + or - , for dataset_4</summary> <returns>return a char, (+) or (-) </returns>
         public char createRnd_pos_neg_Effect() => (Rnd.Next() % 2 == 0) ? '+' : '-' ;
-
 
         ~Pharmacy()
         {}
@@ -123,7 +200,8 @@ namespace DS
         static void Main(string[] args)
         {
             Pharmacy p = new Pharmacy();
-            p.Make_Interactions();
+            p.Make_Drug_Interactions();
+            p.Make_Disease_Allergies();
             while(true)
             {
                 System.Console.WriteLine("1. start ");
