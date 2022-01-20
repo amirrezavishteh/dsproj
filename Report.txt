@@ -1,0 +1,23 @@
+Read Drug from dataset_1 => +
+Read Disease from dataset_2 => +
+
+Read Data from dataset_3 => +
+Read Data from dataset_4 => +
+
+Create Drug => +
+Delete Drug => -
+Read Drug => -
+
+Create Disease => -
+Delete Disease => -
+Read Disease => -
+
+Update data in dataset_1 => -
+Update data in dataset_2 => -
+Update data in dataset_3 => -
+Update data in dataset_4 => -
+
+Search Drug => -
+Search Disease => -
+
+Update Drug Price => -
