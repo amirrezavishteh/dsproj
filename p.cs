@@ -15,21 +15,6 @@
 //             this.name = name;
 //             this.price = price;
 //         }
-//         public override bool Equals(object obj)
-//         {
-//             var other = obj as Drug;
-//             return other.name == this.name;
-//         }
-
-//         public override int GetHashCode()
-//         {
-//             int result = 0;
-//             foreach (char c in this.name)
-//             {
-//                 result += (10*result + (int)(c));
-//             }
-//             return result;
-//         }
 //     }
 
 //     public class Pharmacy
@@ -37,17 +22,15 @@
 //         string characters = "abcdefghijklmnopqrstuvwxyz";
 //         Random Rnd = new Random();
 //         public List<Drug> Drugs;
-//         public List<string> Disease;
 //         public List<List<string>> Drugs_Effect_Graph;
-//         public Dictionary<string, Dictionary<string, char>> Allergies_Effect_Graph;
 //         public Dictionary<string, int> Drugs_ids;
-//         int last_id = 0;
+//         int Drugs_last_id = 0;
 //         public List<Drug> New_Drugs;
 //         public Pharmacy()
 //         {
-//             this.Disease = new List<string>();
+//             // this.Disease = new List<string>();
 //             this.Drugs_Effect_Graph = new List<List<string>>();
-//             this.Allergies_Effect_Graph = new Dictionary<string, Dictionary<string, char>>();
+//             // this.Allergies_Effect_Graph = new Dictionary<string, Dictionary<string, char>>();
 //             this.Drugs_ids = new Dictionary<string, int>();
 //             this.Drugs = new List<Drug>();
 //             #region Read Drug Data
@@ -60,39 +43,39 @@
 //                         var a = line.Split(':').Select(x => x.Trim()).ToArray();
 //                         d = new Drug(a[0], double.Parse(a[1]));
 //                         Drugs.Add(d);
-//                         this.Drugs_ids.Add(d.name, this.last_id);
-//                         this.last_id ++;
+//                         this.Drugs_ids.Add(d.name, this.Drugs_last_id);
+//                         this.Drugs_last_id ++;
 //                         line = sr.ReadLine();
 //                     }
 //                 }
 //                 var column = Enumerable.Range(0, this.Drugs.Count).Select(x => String.Empty).ToList();
 //                 for(int i = 0; i < this.Drugs.Count; i++)
 //                 {
-//                     this.Drugs_Effect_Graph.Add(column);
+//                     this.Drugs_Effect_Graph.Add(column.ToList());
 //                 }
 //             #endregion Read Drug Data
 
 //             #region Read Disease Data
-//                 using(StreamReader sr = new StreamReader("./dataset_2.txt"))
-//                 {
-//                     string disease = sr.ReadLine();
-//                     while(disease != null)
-//                     {
-//                         this.Disease.Add(disease);
-//                         disease = sr.ReadLine();
-//                     }
-//                 }
-//                 Dictionary<string, char> disease_effect = new Dictionary<string, char>();
-//                 for(int i = 0; i<this.Drugs.Count; i++)
-//                 {
-//                     disease_effect.Add(this.Drugs[i].name, '#');
-//                 }
-//                 string dis;
-//                 for(int i = 0; i < this.Disease.Count; i++)
-//                 {
-//                     dis = this.Disease[i];
-//                     this.Allergies_Effect_Graph.Add(this.Disease[i], disease_effect);
-//                 }
+//                 // using(StreamReader sr = new StreamReader("./dataset_2.txt"))
+//                 // {
+//                 //     string disease = sr.ReadLine();
+//                 //     while(disease != null)
+//                 //     {
+//                 //         this.Disease.Add(disease);
+//                 //         disease = sr.ReadLine();
+//                 //     }
+//                 // }
+//                 // Dictionary<string, char> disease_effect = new Dictionary<string, char>();
+//                 // for(int i = 0; i<this.Drugs.Count; i++)
+//                 // {
+//                 //     disease_effect.Add(this.Drugs[i].name, '#');
+//                 // }
+//                 // string dis;
+//                 // for(int i = 0; i < this.Disease.Count; i++)
+//                 // {
+//                 //     dis = this.Disease[i];
+//                 //     this.Allergies_Effect_Graph.Add(this.Disease[i], disease_effect);
+//                 // }
 //             #endregion Read Disease Data
 //         }
 
@@ -101,10 +84,22 @@
 //             string[] line;
 //             using(StreamReader sr = new StreamReader("./dataset_3.txt"))
 //             {
-//                 line = sr.ReadLine().Split(new char[]{':', '(', ',', ')', ' '}, StringSplitOptions.RemoveEmptyEntries).ToArray();
-//                 int i = Drugs_ids[line[0]];
-//                 int j = Drugs_ids[line[0]];
-//                 Drugs_Effect_Graph[i][j] = line[2];
+//                 // line = sr.ReadLine().Split(new char[]{':', '(', ',', ')', ' '}, StringSplitOptions.RemoveEmptyEntries).ToArray();
+//                 // int i = Drugs_ids[line[0]];
+//                 // int j = Drugs_ids[line[0]];
+//                 // Drugs_Effect_Graph[i][j] = line[2];
+//                 line = sr.ReadLine().Split(':', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+//                 var effected_drugs = line[1].Split(new char[]{';', ' '}, StringSplitOptions.RemoveEmptyEntries)
+//                             .Select(item => {
+//                                 var a = item.Split(new char[]{'(', ')', ','}, StringSplitOptions.RemoveEmptyEntries);
+//                                 return (drug:a[0], effect : a[1]);
+//                             }).ToArray();
+//                 for(int u = 0; u < effected_drugs.Length; u++)
+//                 {
+//                     int i = this.Drugs_ids[line[0]];
+//                     int j = this.Drugs_ids[effected_drugs[u].drug];
+//                     this.Drugs_Effect_Graph[i][j] = effected_drugs[u].effect;
+//                 }
 //             }
 //         }
 
@@ -141,10 +136,10 @@
 //             Drug d = new Drug(name, price);
 //             try
 //             {
-//                 this.Drugs_ids.Add(name, this.last_id);
+//                 this.Drugs_ids.Add(name, this.Drugs_last_id);
 //                 this.Drugs.Add(d);
 //                 this.New_Drugs.Add(d);
-//                 this.last_id ++;
+//                 this.Drugs_last_id ++;
 //                 for(int i = 0; i < this.Drugs_Effect_Graph.Count; i++)
 //                     this.Drugs_Effect_Graph[i].Add(String.Empty);
 //                 string effect = "";
