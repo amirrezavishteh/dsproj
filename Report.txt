@@ -6,14 +6,14 @@ Read Data from dataset_4 => +
 
 Create Drug => +
 Delete Drug => +
-Read Drug => -
+Read Drug => +
 
 Create Disease => +
 Delete Disease => +
-Read Disease => -
+Read Disease => +
 
-Search Drug => -
-Search Disease => -
+Search Drug => +
+Search Disease => +
 
 Update Drug Price => -
 

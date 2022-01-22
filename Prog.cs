@@ -19,6 +19,7 @@ namespace DS
     }
     public class Pharmacy
     {
+        Stopwatch sw = new Stopwatch();
         string characters = "abcdefghijklmnopqrstuvwxyz";
         public Random Rnd = new Random();
         public static long Encode_HashCode(string value)
@@ -30,11 +31,40 @@ namespace DS
             }
             return result;
         }
+        public long Get_Drug_Index(string drug)
+        {
+            long hashCode = Encode_HashCode(drug) % this.Drugs_Capacity;
+            sw.Restart();
+            while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key==null||this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name != drug)
+            {
+                if(sw.ElapsedMilliseconds > 700)
+                    return -1;
+                hashCode = (hashCode + 1) % this.Drugs_Capacity;
+            }
+            sw.Reset();
+            return hashCode;
+        }
+        public long Get_Disease_Index(string disease)
+        {
+            long hashCode = Encode_HashCode(disease) % this.Disease_Capacity;
+            sw.Restart();
+            while(this.Disease_With_Their_Effective_Drugs[hashCode].Key != disease)
+            {
+                if(sw.ElapsedMilliseconds > 700)
+                    return -1;
+                hashCode = (hashCode + 1) % this.Disease_Capacity;
+            }
+            return hashCode;
+        }
         public void Put_Drug_Into_Table(Drug drug)
         {
             long hashCode = Encode_HashCode(drug.name) % this.Drugs_Capacity;
             while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key != null)
+            {
+                if(this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name == drug.name)
+                    throw new Exception();
                 hashCode = (hashCode + 1) % this.Drugs_Capacity;
+            }
             var kv = new KeyValuePair<Drug, Dictionary<string, string>>(drug, null);
             this.Drugs_With_Their_Interactions_Drug[hashCode] = kv;
         }
@@ -42,7 +72,11 @@ namespace DS
         {
             long hashCode = Encode_HashCode(disease) % this.Disease_Capacity;
             while(this.Disease_With_Their_Effective_Drugs[hashCode].Key != null)
+            {
                 hashCode = (hashCode + 1) % this.Disease_Capacity;
+                if(this.Disease_With_Their_Effective_Drugs[hashCode].Key == disease)
+                    throw new Exception();
+            }
             var kv = new KeyValuePair<string, Dictionary<string, char>>(disease, null);
             this.Disease_With_Their_Effective_Drugs[hashCode] = kv;
         }
@@ -96,51 +130,60 @@ namespace DS
                 this.Drugs_Capacity += 10;
             }
             Drug d = new Drug(name, price);
-            this.Put_Drug_Into_Table(d);
-            this.Drugs_number ++;
-            if(!first_mode)
+            try
             {
-                int random_count = this.Rnd.Next(1, 9);
-                var interactions_drugs = new string[random_count];
-                int idx = 0;
-                List<int> indexes = new List<int>();
-                for(int _ = 0; _ < interactions_drugs.Length; _++)
+                this.Put_Drug_Into_Table(d);
+                this.Drugs_number ++;
+                if(!first_mode)
                 {
-                    int i = this.Rnd.Next(this.Drugs_number);
-                    while(indexes.Contains(i)||this.Drugs_With_Their_Interactions_Drug[i].Key.name == name)
-                        i = this.Rnd.Next(this.Drugs_number);
-                    interactions_drugs[idx] = this.Drugs_With_Their_Interactions_Drug[i].Key.name;
-                    idx++;
-                    indexes.Add(i);
-                }
-                indexes.Clear();
-                idx = 0;
-                random_count = this.Rnd.Next(1, 8);
-                var Effective_diseases = new string[random_count];
-                for(int _ = 0; _ < Effective_diseases.Length; _++)
-                {
-                    int i = this.Rnd.Next(this.Disease_number);
-                    while(indexes.Contains(i))
-                        i = this.Rnd.Next(this.Disease_number);
-                    Effective_diseases[idx] = this.Disease_With_Their_Effective_Drugs[i].Key;
-                    idx++;
-                    indexes.Add(i);
-                }
+                    int random_count = this.Rnd.Next(1, 9);
+                    var interactions_drugs = new string[random_count];
+                    int idx = 0;
+                    List<int> indexes = new List<int>();
+                    for(int _ = 0; _ < interactions_drugs.Length; _++)
+                    {
+                        int i = this.Rnd.Next(this.Drugs_number);
+                        while(indexes.Contains(i)||this.Drugs_With_Their_Interactions_Drug[i].Key.name == name)
+                            i = this.Rnd.Next(this.Drugs_number);
+                        interactions_drugs[idx] = this.Drugs_With_Their_Interactions_Drug[i].Key.name;
+                        idx++;
+                        indexes.Add(i);
+                    }
+                    indexes.Clear();
+                    idx = 0;
+                    random_count = this.Rnd.Next(1, 8);
+                    var Effective_diseases = new string[random_count];
+                    for(int _ = 0; _ < Effective_diseases.Length; _++)
+                    {
+                        int i = this.Rnd.Next(this.Disease_number);
+                        while(indexes.Contains(i))
+                            i = this.Rnd.Next(this.Disease_number);
+                        Effective_diseases[idx] = this.Disease_With_Their_Effective_Drugs[i].Key;
+                        idx++;
+                        indexes.Add(i);
+                    }
 
-                string effect = "Eff_";
-                for(int i = 0; i < interactions_drugs.Length; i++)
-                {
-                    for(int _ = 0; _ < 10; _++)
-                        effect += this.characters[this.Rnd.Next(26)];
-                    this.Make_Interaction(name, interactions_drugs[i], effect);
-                    this.Make_Interaction(interactions_drugs[i], name, effect);
-                    effect = "Eff_";
-                }
+                    string effect = "Eff_";
+                    for(int i = 0; i < interactions_drugs.Length; i++)
+                    {
+                        for(int _ = 0; _ < 10; _++)
+                            effect += this.characters[this.Rnd.Next(26)];
+                        this.Make_Interaction(name, interactions_drugs[i], effect);
+                        this.Make_Interaction(interactions_drugs[i], name, effect);
+                        effect = "Eff_";
+                    }
 
-                for(int i = 0; i<Effective_diseases.Length; i++)
-                {
-                    this.Make_Allergie(Effective_diseases[i], name, this.createRnd_pos_neg_Effect());
+                    for(int i = 0; i<Effective_diseases.Length; i++)
+                    {
+                        this.Make_Allergie(Effective_diseases[i], name, this.createRnd_pos_neg_Effect());
+                    }
                 }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"There was a drug with name {name} in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
         public void Create_Disease(string disease, bool first_mode = true)
@@ -154,60 +197,194 @@ namespace DS
                 temp = null;
                 this.Disease_Capacity += 10;
             }
-            this.Put_Disease_Into_Table(disease);
-            this.Disease_number ++;
-            if(!first_mode)
+            try
             {
-                int random_count = this.Rnd.Next(40);
-                var Effective_drugs = new string[random_count];
-                int idx = 0;
-                for(int _ = 0; _ < Effective_drugs.Length; _++)
+                this.Put_Disease_Into_Table(disease);
+                this.Disease_number ++;
+                if(!first_mode)
                 {
-                    int i = this.Rnd.Next(this.Drugs_number);
-                    Effective_drugs[idx] = this.Drugs_With_Their_Interactions_Drug[i].Key.name;
-                    idx++;
-                }
+                    int random_count = this.Rnd.Next(40);
+                    var Effective_drugs = new string[random_count];
+                    int idx = 0;
+                    List<int> indexes = new List<int>();
+                    for(int _ = 0; _ < Effective_drugs.Length; _++)
+                    {
+                        int i = this.Rnd.Next(this.Drugs_number);
+                        while(indexes.Contains(i))
+                            i = this.Rnd.Next(this.Drugs_number);
+                        Effective_drugs[idx] = this.Drugs_With_Their_Interactions_Drug[i].Key.name;
+                        idx++;
+                        indexes.Add(i);
+                    }
 
-                for(int i = 0; i<Effective_drugs.Length; i++)
-                {
-                    this.Make_Allergie(disease, Effective_drugs[i], this.createRnd_pos_neg_Effect());
+                    for(int i = 0; i<Effective_drugs.Length; i++)
+                    {
+                        this.Make_Allergie(disease, Effective_drugs[i], this.createRnd_pos_neg_Effect());
+                    }
                 }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"There was a disease with name {disease} in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
+
         public void Delete_Drug(string drug)
         {
-            long hashCode = Encode_HashCode(drug) % this.Drugs_Capacity;
-            while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key==null||this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name != drug)
+            long hashCode = this.Get_Drug_Index(drug);
+            try
             {
-                hashCode = (hashCode + 1) % this.Drugs_Capacity;
-            }
-            var interactions_drugs = this.Drugs_With_Their_Interactions_Drug[hashCode].Value?.ToArray();
-            this.Drugs_With_Their_Interactions_Drug[hashCode] = new KeyValuePair<Drug, Dictionary<string, string>>(null, null);
-            this.Drugs_number--;
-            for(int i = 0; i<interactions_drugs?.Length; i++)
-            {
-                hashCode = Encode_HashCode(interactions_drugs[i].Key) % this.Drugs_Capacity;
-                while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key==null||this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name != interactions_drugs[i].Key)
+                var interactions_drugs = this.Drugs_With_Their_Interactions_Drug[hashCode].Value?.ToArray();
+                this.Drugs_With_Their_Interactions_Drug[hashCode] = new KeyValuePair<Drug, Dictionary<string, string>>(null, null);
+                this.Drugs_number--;
+                for(int i = 0; i<interactions_drugs?.Length; i++)
                 {
-                    hashCode = (hashCode + 1) % this.Drugs_Capacity;
+                    hashCode = Get_Drug_Index(interactions_drugs[i].Key);
+                    this.Drugs_With_Their_Interactions_Drug[hashCode].Value.Remove(drug);
                 }
-                this.Drugs_With_Their_Interactions_Drug[hashCode].Value.Remove(drug);
-            }
-            for(int i = 0; i<this.Disease_With_Their_Effective_Drugs.Length; i++)
-            {
-                if(this.Disease_With_Their_Effective_Drugs[i].Value!=null && this.Disease_With_Their_Effective_Drugs[i].Value.ContainsKey(drug))
+                for(int i = 0; i<this.Disease_With_Their_Effective_Drugs.Length; i++)
                 {
-                    this.Disease_With_Their_Effective_Drugs[i].Value.Remove(drug);
+                    if(this.Disease_With_Their_Effective_Drugs[i].Value!=null && this.Disease_With_Their_Effective_Drugs[i].Value.ContainsKey(drug))
+                    {
+                        this.Disease_With_Their_Effective_Drugs[i].Value.Remove(drug);
+                    }
                 }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"There is not any drug with name {drug} in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
         public void Delete_Disease(string disease)
         {
-            long hashCode = Encode_HashCode(disease) % this.Disease_Capacity;
-            while(this.Disease_With_Their_Effective_Drugs[hashCode].Key != disease)
-                hashCode = (hashCode + 1) % this.Disease_Capacity;
-            this.Disease_number--;
-            this.Disease_With_Their_Effective_Drugs[hashCode] = new KeyValuePair<string, Dictionary<string, char>>(null, null);
+            long hashCode = this.Get_Disease_Index(disease);
+            try
+            {
+                this.Disease_With_Their_Effective_Drugs[hashCode] = new KeyValuePair<string, Dictionary<string, char>>(null, null);
+                this.Disease_number--;
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"There is not any disease with name {disease} in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
+
+        public KeyValuePair<Drug, Dictionary<string, string>> Read_Drug(string name)
+        {
+            long hashCode = this.Get_Drug_Index(name);
+            try
+            {
+                return this.Drugs_With_Their_Interactions_Drug[hashCode];
+            }
+            catch
+            {
+                return new KeyValuePair<Drug, Dictionary<string, string>>(null, null);
+            }
+        }
+        public KeyValuePair<string, Dictionary<string, char>> Read_Disease(string name)
+        {
+            long hashCode = Get_Disease_Index(name);
+            try
+            {
+                return this.Disease_With_Their_Effective_Drugs[hashCode];
+            }
+            catch
+            {
+                return new KeyValuePair<string, Dictionary<string, char>>(null, null);
+            }
+        }
+
+        public void Search_Drug(string name)
+        {
+            this.sw.Restart();
+            var interactions_drugs = this.Read_Drug(name);
+            try
+            {
+                if (interactions_drugs.Key == null) throw new Exception();
+                Console.BackgroundColor = ConsoleColor.White;
+                Console.ForegroundColor = ConsoleColor.Black;
+                System.Console.WriteLine(" \t Drug \t " + "|" + " \tEffect\t  ");
+                System.Console.WriteLine("----------------------------------");
+                for(int i = 0; i< interactions_drugs.Value?.Count; i++)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write($" {interactions_drugs.Value.ElementAt(i).Key} ");
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.Write("|");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write($" {interactions_drugs.Value.ElementAt(i).Value} \n");
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    System.Console.WriteLine("----------------------------------");
+                }
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
+                System.Console.WriteLine("+++++++++++++++++++++++++++++++++++++++++++++++++");
+
+                Console.BackgroundColor = ConsoleColor.White;
+                Console.ForegroundColor = ConsoleColor.Black;
+                System.Console.WriteLine("    Disease\t" + "|" + "Allergy");
+                System.Console.WriteLine("------------------------");
+                for(int i = 0; i<this.Disease_With_Their_Effective_Drugs?.Length; i++)
+                {
+                    if(this.Disease_With_Their_Effective_Drugs[i].Value!=null && this.Disease_With_Their_Effective_Drugs[i].Value.ContainsKey(name))
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write($" {this.Disease_With_Their_Effective_Drugs[i].Key} ");
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write("|");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write($"  {this.Disease_With_Their_Effective_Drugs[i].Value[name]}    \n");
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        System.Console.WriteLine("------------------------");
+                    }
+                }
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
+                System.Console.WriteLine("Search Drug time : " + this.sw.ElapsedMilliseconds);
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"There is not any drug with name {name} in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+        }
+        public void Search_Disease(string name)
+        {
+            var allergies_drugs = this.Read_Disease(name);
+            try
+            {
+                if(allergies_drugs.Key == null) throw new Exception();
+                Console.BackgroundColor = ConsoleColor.White;
+                Console.ForegroundColor = ConsoleColor.Black;
+                System.Console.WriteLine(" \tDrug \t " + "|" + " Allergy  ");
+                System.Console.WriteLine("----------------------------");
+                for(int i = 0; i< allergies_drugs.Value?.Count; i++)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write($" {allergies_drugs.Value.ElementAt(i).Key} ");
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.Write("|");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write($"    {allergies_drugs.Value.ElementAt(i).Value}     \n");
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    System.Console.WriteLine("----------------------------");
+                }
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                System.Console.WriteLine($"There is not any disease with name {name} in dataset.");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
 
         public void Make_All_Interactions_Drug()
@@ -259,11 +436,7 @@ namespace DS
         }
         public void Make_Interaction(string d1, string d2, string effect)
         {
-            long hashCode = Encode_HashCode(d1) % this.Drugs_Capacity;
-            while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key==null||this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name != d1)
-            {
-                hashCode = (hashCode + 1) % this.Drugs_Capacity;
-            }
+            long hashCode = this.Get_Drug_Index(d1);
             if(this.Drugs_With_Their_Interactions_Drug[hashCode].Value == null)
             {
                 var t = new Dictionary<string, string>();
@@ -273,11 +446,7 @@ namespace DS
         }
         public void Make_Allergie(string disease, string drug, char allergy)
         {
-            long hashCode = Encode_HashCode(disease) % this.Disease_Capacity;
-            while(this.Disease_With_Their_Effective_Drugs[hashCode].Key != disease)
-            {
-                hashCode = (hashCode + 1) % this.Disease_Capacity;
-            }
+            long hashCode = this.Get_Disease_Index(disease);
             if(this.Disease_With_Their_Effective_Drugs[hashCode].Value == null)
             {
                 var t = new Dictionary<string, char>();
@@ -293,11 +462,6 @@ namespace DS
             Pharmacy p = new Pharmacy();
             p.Make_All_Interactions_Drug();
             p.Make_All_Allergies();
-            // p.Create_Drug("Drug_hvtiayzegu", 8645345, false);
-            // p.Delete_Drug("Drug_hvtiayzegu");
-            // p.Delete_Drug("Drug_twsvuusyqt");
-            // p.Create_Disease("Dis_akfjdfaklj", false);
-            // p.Delete_Disease("Dis_akfjdfaklj");
             while(true)
             {
                 System.Console.WriteLine("1. start ");
