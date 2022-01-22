@@ -17,7 +17,7 @@ namespace DS
             this.price = price;
         }
     }
-    public class Pharmacy
+    public class Pharmacy : IDisposable
     {
         Stopwatch sw = new Stopwatch();
         string characters = "abcdefghijklmnopqrstuvwxyz";
@@ -56,26 +56,30 @@ namespace DS
             }
             return hashCode;
         }
-        public void Put_Drug_Into_Table(Drug drug)
+        public void Put_Drug_Into_Table(Drug drug, bool first_mode = true)
         {
+            if(!first_mode)
+                for(int i = 0; i<this.Drugs_With_Their_Interactions_Drug.Length; i++)
+                    if(this.Drugs_With_Their_Interactions_Drug[i].Key!=null && this.Drugs_With_Their_Interactions_Drug[i].Key.name == drug.name)
+                        throw new Exception();
             long hashCode = Encode_HashCode(drug.name) % this.Drugs_Capacity;
             while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key != null)
             {
-                if(this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name == drug.name)
-                    throw new Exception();
                 hashCode = (hashCode + 1) % this.Drugs_Capacity;
             }
             var kv = new KeyValuePair<Drug, Dictionary<string, string>>(drug, null);
             this.Drugs_With_Their_Interactions_Drug[hashCode] = kv;
         }
-        public void Put_Disease_Into_Table(string disease)
+        public void Put_Disease_Into_Table(string disease, bool first_mode = true)
         {
+            if(!first_mode)
+                for(int i = 0; i<this.Disease_With_Their_Effective_Drugs.Length; i++)
+                    if(this.Disease_With_Their_Effective_Drugs[i].Key == disease)
+                        throw new Exception();
             long hashCode = Encode_HashCode(disease) % this.Disease_Capacity;
             while(this.Disease_With_Their_Effective_Drugs[hashCode].Key != null)
             {
                 hashCode = (hashCode + 1) % this.Disease_Capacity;
-                if(this.Disease_With_Their_Effective_Drugs[hashCode].Key == disease)
-                    throw new Exception();
             }
             var kv = new KeyValuePair<string, Dictionary<string, char>>(disease, null);
             this.Disease_With_Their_Effective_Drugs[hashCode] = kv;
@@ -132,7 +136,7 @@ namespace DS
             Drug d = new Drug(name, price);
             try
             {
-                this.Put_Drug_Into_Table(d);
+                this.Put_Drug_Into_Table(d, first_mode);
                 this.Drugs_number ++;
                 if(!first_mode)
                 {
@@ -177,6 +181,9 @@ namespace DS
                     {
                         this.Make_Allergie(Effective_diseases[i], name, this.createRnd_pos_neg_Effect());
                     }
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    System.Console.WriteLine($"The {name} added to dataset successfully.");
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }
             catch
@@ -199,11 +206,11 @@ namespace DS
             }
             try
             {
-                this.Put_Disease_Into_Table(disease);
+                this.Put_Disease_Into_Table(disease, first_mode);
                 this.Disease_number ++;
                 if(!first_mode)
                 {
-                    int random_count = this.Rnd.Next(40);
+                    int random_count = this.Rnd.Next(1, 5);
                     var Effective_drugs = new string[random_count];
                     int idx = 0;
                     List<int> indexes = new List<int>();
@@ -221,6 +228,9 @@ namespace DS
                     {
                         this.Make_Allergie(disease, Effective_drugs[i], this.createRnd_pos_neg_Effect());
                     }
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    System.Console.WriteLine($"The disease {disease} added to dataset successfully.");
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }
             catch
@@ -251,6 +261,9 @@ namespace DS
                         this.Disease_With_Their_Effective_Drugs[i].Value.Remove(drug);
                     }
                 }
+                Console.ForegroundColor = ConsoleColor.Green;
+                System.Console.WriteLine($"The drug with name {drug} removed from dataset successfully.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
             catch
             {
@@ -266,6 +279,9 @@ namespace DS
             {
                 this.Disease_With_Their_Effective_Drugs[hashCode] = new KeyValuePair<string, Dictionary<string, char>>(null, null);
                 this.Disease_number--;
+                Console.ForegroundColor = ConsoleColor.Green;
+                System.Console.WriteLine($"The disease with name {disease} removed from dataset successfully.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
             catch
             {
@@ -302,7 +318,6 @@ namespace DS
 
         public void Search_Drug(string name)
         {
-            this.sw.Restart();
             var interactions_drugs = this.Read_Drug(name);
             try
             {
@@ -346,7 +361,6 @@ namespace DS
                 }
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.BackgroundColor = ConsoleColor.Black;
-                System.Console.WriteLine("Search Drug time : " + this.sw.ElapsedMilliseconds);
             }
             catch
             {
@@ -385,6 +399,18 @@ namespace DS
                 System.Console.WriteLine($"There is not any disease with name {name} in dataset.");
                 Console.ForegroundColor = ConsoleColor.White;
             }
+        }
+
+        public void Update_Drug_Price(string[] drugs, double inflation)
+        {
+            for(int i = 0; i<drugs.Length; i++)
+            {
+                long hashCode = this.Get_Drug_Index(drugs[i]);
+                this.Drugs_With_Their_Interactions_Drug[hashCode].Key.price += (this.Drugs_With_Their_Interactions_Drug[hashCode].Key.price * inflation / 100);
+            }
+            Console.ForegroundColor = ConsoleColor.Green;
+            System.Console.WriteLine("The price of drugs updated successfully.");
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         public void Make_All_Interactions_Drug()
@@ -454,77 +480,357 @@ namespace DS
             }
             this.Disease_With_Their_Effective_Drugs[hashCode].Value.Add(drug, allergy);
         }
+
+        public void Check_Interaction(string[] drugs)
+        {
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
+            System.Console.WriteLine("    1_Drug\t " + "|" + " \t2_Drug\t  " + " |  " + " \tEffect\t    ");
+            System.Console.WriteLine("----------------------------------------------------");
+            for(int i=0; i<drugs.Length; i++)
+            {
+                long hashCode = Get_Drug_Index(drugs[i]);
+                var interactions_drugs = this.Drugs_With_Their_Interactions_Drug[hashCode].Value;
+                string d = this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name;
+                for(int j=i+1; j<drugs.Length && interactions_drugs!=null; j++)
+                {
+                    hashCode = Get_Drug_Index(drugs[j]);
+                    var interact_drug = this.Drugs_With_Their_Interactions_Drug[hashCode].Key;
+                    if(interactions_drugs.ContainsKey(interact_drug.name))
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write($" {d} ");
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write("| ");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write(interact_drug.name);
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write(" | ");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write(interactions_drugs[interact_drug.name] + " \n");
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        System.Console.WriteLine("----------------------------------------------------");
+                    }
+                }
+            }
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+        public void Check_Allergies(string[] drugs, string[] diseases)
+        {
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
+            System.Console.WriteLine("    Disease     " + "|" + " \tDrug\t " + " |" + "   Allergy   ");
+            System.Console.WriteLine("------------------------------------------------");
+            foreach (string disease in diseases)
+            {
+                long hashCode = this.Get_Disease_Index(disease);
+                var allergies = this.Disease_With_Their_Effective_Drugs[hashCode].Value;
+                for(int i = 0; i <drugs.Length && allergies != null; i++)
+                {
+                    if(allergies.ContainsKey(drugs[i]))
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write($" {disease} ");
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write("| ");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write(drugs[i]);
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write(" | ");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write("    " + allergies[drugs[i]] + " \t\n");
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        System.Console.WriteLine("------------------------------------------------");
+                    }
+                }
+            }
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        public double Get_Invoice_Price(string[] drugs)
+        {
+            double price = 0;
+            foreach(var drug in drugs)
+            {
+                try
+                {
+                    long hashCode = Get_Drug_Index(drug);
+                    price += this.Drugs_With_Their_Interactions_Drug[hashCode].Key.price;
+                }
+                catch
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    System.Console.WriteLine($"There is not any drug with name {drug} in dataset.");
+                }
+            }
+            return price;
+        }
+
+        public void Dispose()
+        {
+            #region Write Drugs in dataset_1
+            using (StreamWriter sw = new StreamWriter("./dataset_1.txt", false))
+            {
+                foreach (var drug in this.Drugs_With_Their_Interactions_Drug)
+                {
+                    if(drug.Key != null)
+                        sw.WriteLine($"{drug.Key?.name} : {drug.Key?.price}");
+                }
+            }
+            #endregion
+
+            #region Write Disease in dataset_2
+            using(StreamWriter sw = new StreamWriter("./dataset_2.txt", false))
+            {
+                foreach(var disease in this.Disease_With_Their_Effective_Drugs)
+                {
+                    if(disease.Key != null)
+                        sw.WriteLine(disease.Key);
+                }
+            }
+            #endregion
+
+            #region Write Interactions_Drugs in dataset_3
+            using(StreamWriter sw = new StreamWriter("./dataset_3.txt", false))
+            {
+                foreach(var drug in this.Drugs_With_Their_Interactions_Drug)
+                {
+                    string result = drug.Key?.name + " :";
+                    for(int i = 0; i<drug.Value?.Count; i++)
+                    {
+                        if(i == drug.Value.Count - 1)
+                            result += $" ({drug.Value.ElementAt(i).Key},{drug.Value.ElementAt(i).Value})";
+                        else
+                            result += $" ({drug.Value.ElementAt(i).Key},{drug.Value.ElementAt(i).Value}) ;";
+                    }
+                    if(drug.Value != null &&drug.Value.Count > 0)
+                    {
+                        sw.WriteLine(result);
+                    }
+                }
+            }
+            #endregion
+
+            #region Write allergies in dataset_4
+            using(StreamWriter sw = new StreamWriter("./dataset_4.txt", false))
+            {
+                foreach(var disease in this.Disease_With_Their_Effective_Drugs)
+                {
+                    if(disease.Value != null && disease.Value.Count > 0)
+                    {
+                        string result = disease.Key + " :";
+                        for(int i = 0; i<disease.Value.Count; i++)
+                        {
+                            if(i == disease.Value.Count - 1)
+                                result += $" ({disease.Value.ElementAt(i).Key},{disease.Value.ElementAt(i).Value})";
+                            else
+                                result += $" ({disease.Value.ElementAt(i).Key},{disease.Value.ElementAt(i).Value}) ;";
+                        }
+                        sw.WriteLine(result);
+                    }
+                }
+            }
+            #endregion
+
+            this.Disease_With_Their_Effective_Drugs = null;
+            this.Drugs_With_Their_Interactions_Drug = null;
+        }
     }
     class Program
     {
         static void Main(string[] args)
         {
+            bool Continue = true;
             Pharmacy p = new Pharmacy();
             p.Make_All_Interactions_Drug();
             p.Make_All_Allergies();
-            while(true)
+            Console.ForegroundColor = ConsoleColor.Blue;
+            System.Console.WriteLine("1. start ");
+            System.Console.WriteLine("2. Check for drug interactions in a prescription ");
+            System.Console.WriteLine("3. Check for drug allergies in a prescription ");
+            System.Console.WriteLine("4. Calculate the invoice price of the prescription ");
+            System.Console.WriteLine("5. Changing the price of the drugs(inflation) ");
+            System.Console.WriteLine("6. Add drug in dataset ");
+            System.Console.WriteLine("7. remove drug from dataset ");
+            System.Console.WriteLine("8. Add disease in dataset ");
+            System.Console.WriteLine("9. remove disease from dataset ");
+            System.Console.WriteLine("10. Search drug ");
+            System.Console.WriteLine("11. Search disease ");
+            System.Console.WriteLine("0. to exit program insert q ");
+            Console.ForegroundColor = ConsoleColor.White;
+            string option;
+            int option_number = 0;
+            while(option_number != 1)
             {
-                System.Console.WriteLine("1. start ");
-                System.Console.WriteLine("2. Check for drug interactions in a prescription ");
-                System.Console.WriteLine("3. Check for drug allergies in a prescription ");
-                System.Console.WriteLine("4. Calculate the invoice price of the prescription ");
-                System.Console.WriteLine("5. Changing the price of the drugs ");
-                System.Console.WriteLine("6. Add or remove from dataset ");
-                System.Console.WriteLine("7. Search ");
-                string option;
-                int option_number;
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                System.Console.WriteLine("For accessing to drugs data insert 1 first of all");
+                Console.ForegroundColor = ConsoleColor.White;
+                try
+                {
+                    option = System.Console.ReadLine();
+                    option_number = int.Parse(option);
+                }
+                catch{}
+            }
+            while (true)
+            {
+                Stopwatch sw = new Stopwatch();
                 while(true)
                 {
+                    System.Console.WriteLine("Choose Option(1-11)");
+                    option = System.Console.ReadLine();
                     try
                     {
-                        System.Console.WriteLine("Choose Option(1-7)");
-                        option = System.Console.ReadLine();
                         option_number = int.Parse(option);
-                        if(option_number != 1)
-                        {
-                            throw new Exception("Invalid Input");
-                        }
+                        if(option_number > 11 || option_number < 1) throw new Exception();
                         break;
                     }
                     catch (System.FormatException)
                     {
+                        if(option.ToLower() == "q")
+                        {
+                            Continue = false;
+                            break;
+                        }
                         Console.ForegroundColor = ConsoleColor.Red;
                         System.Console.WriteLine("Your input isn't in correct format, please insert number");
                         Console.ForegroundColor = ConsoleColor.White;
                     }
                     catch (Exception)
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        System.Console.WriteLine("For accessing to drugs data insert 1 first of all");
                         Console.ForegroundColor = ConsoleColor.Red;
-                        System.Console.WriteLine("Your input wasn't in correct range, please insert any number in range 1-7");
+                        System.Console.WriteLine("Your input wasn't in correct range, please insert any number in range 1-10");
                         Console.ForegroundColor = ConsoleColor.White;
                     }
                 }
-                switch (option_number)
+                if(!Continue) break;
+                try
                 {
-                    case 1:
-                    break;
+                    switch (option_number)
+                    {
+                        case 2:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your drugs name at a single line with space between them.");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            var drugs = Console.ReadLine().Split();
+                            sw.Restart();
+                            p.Check_Interaction(drugs);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
 
-                    case 2:
-                    break;
+                        case 3:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your diseases name at first line with space between them.\nInsert your drugs at second line with space between them.");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            var diseases = Console.ReadLine().Split();
+                            drugs = Console.ReadLine().Split();
+                            sw.Restart();
+                            p.Check_Allergies(drugs, diseases);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
 
-                    case 3:
-                    break;
+                        case 4:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your drugs name at a single line with space between them.");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            drugs = Console.ReadLine().Split();
+                            sw.Restart();
+                            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                            System.Console.WriteLine("Total Price : " + p.Get_Invoice_Price(drugs));
+                            Console.ForegroundColor = ConsoleColor.White;
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                        break;
 
-                    case 4:
-                    break;
+                        case 5:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your drugs name at first line with space between them.\nInsert the amount of inflation at second line.");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            drugs = Console.ReadLine().Split();
+                            double inflation = double.Parse(Console.ReadLine());
+                            sw.Restart();
+                            p.Update_Drug_Price(drugs, inflation);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
 
-                    case 5:
-                    break;
+                        case 6:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your drug name and price base on follow patter.\n<name> <price>");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            var drug = Console.ReadLine().Split();
+                            sw.Restart();
+                            p.Create_Drug(drug[0], double.Parse(drug[1]), false);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
 
-                    case 6:
-                    break;
+                        case 7:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your drug name : ");
+                            var d = Console.ReadLine();
+                            sw.Restart();
+                            p.Delete_Drug(d);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
 
-                    case 7:
-                    break;
+                        case 8:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your disease name : ");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            var disease = Console.ReadLine();
+                            sw.Restart();
+                            p.Create_Disease(disease, false);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
+
+                        case 9:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your disease name : ");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            disease = Console.ReadLine();
+                            sw.Restart();
+                            p.Delete_Disease(disease);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
+
+                        case 10:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your drug name : ");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            d = Console.ReadLine();
+                            sw.Restart();
+                            p.Search_Drug(d);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
+
+                        case 11:
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            System.Console.WriteLine("Insert your disease name : ");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            disease = Console.ReadLine();
+                            sw.Restart();
+                            p.Search_Disease(disease);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            Console.ForegroundColor = ConsoleColor.White;
+                        break;
+                    }
+                }
+                catch
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    System.Console.WriteLine("Your input is incorrect, please insert the input according to the instructions of each command");
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
             }
+            p.Dispose();
         }
     }
 }

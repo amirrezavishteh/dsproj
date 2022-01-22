@@ -15,7 +15,7 @@ Read Disease => +
 Search Drug => +
 Search Disease => +
 
-Update Drug Price => -
+Update Drug Price => +
 
 Update data in dataset_1 => -
 Update data in dataset_2 => -
