@@ -717,7 +717,7 @@ namespace DS
                             var drugs = Console.ReadLine().Split();
                             sw.Restart();
                             p.Check_Interaction(drugs);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -729,7 +729,7 @@ namespace DS
                             drugs = Console.ReadLine().Split();
                             sw.Restart();
                             p.Check_Allergies(drugs, diseases);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -742,7 +742,7 @@ namespace DS
                             Console.ForegroundColor = ConsoleColor.DarkMagenta;
                             System.Console.WriteLine("Total Price : " + p.Get_Invoice_Price(drugs));
                             Console.ForegroundColor = ConsoleColor.White;
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                         break;
 
                         case 5:
@@ -753,7 +753,7 @@ namespace DS
                             double inflation = double.Parse(Console.ReadLine());
                             sw.Restart();
                             p.Update_Drug_Price(drugs, inflation);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -764,7 +764,7 @@ namespace DS
                             var drug = Console.ReadLine().Split();
                             sw.Restart();
                             p.Create_Drug(drug[0], double.Parse(drug[1]), false);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -774,7 +774,7 @@ namespace DS
                             var d = Console.ReadLine();
                             sw.Restart();
                             p.Delete_Drug(d);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -785,7 +785,7 @@ namespace DS
                             var disease = Console.ReadLine();
                             sw.Restart();
                             p.Create_Disease(disease, false);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -796,7 +796,7 @@ namespace DS
                             disease = Console.ReadLine();
                             sw.Restart();
                             p.Delete_Disease(disease);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -807,7 +807,7 @@ namespace DS
                             d = Console.ReadLine();
                             sw.Restart();
                             p.Search_Drug(d);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
 
@@ -818,7 +818,7 @@ namespace DS
                             disease = Console.ReadLine();
                             sw.Restart();
                             p.Search_Disease(disease);
-                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds);
+                            System.Console.WriteLine("time : " + sw.ElapsedMilliseconds + " ms");
                             Console.ForegroundColor = ConsoleColor.White;
                         break;
                     }
