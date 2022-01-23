@@ -34,25 +34,26 @@ namespace DS
         public long Get_Drug_Index(string drug)
         {
             long hashCode = Encode_HashCode(drug) % this.Drugs_Capacity;
-            sw.Restart();
+            int i = 0;
             while(this.Drugs_With_Their_Interactions_Drug[hashCode].Key==null||this.Drugs_With_Their_Interactions_Drug[hashCode].Key.name != drug)
             {
-                if(sw.ElapsedMilliseconds > 700)
+                if(i > this.Drugs_Capacity)
                     return -1;
                 hashCode = (hashCode + 1) % this.Drugs_Capacity;
+                i++;
             }
-            sw.Reset();
             return hashCode;
         }
         public long Get_Disease_Index(string disease)
         {
             long hashCode = Encode_HashCode(disease) % this.Disease_Capacity;
-            sw.Restart();
+            int i = 0;
             while(this.Disease_With_Their_Effective_Drugs[hashCode].Key != disease)
             {
-                if(sw.ElapsedMilliseconds > 700)
+                if(i > this.Disease_Capacity)
                     return -1;
                 hashCode = (hashCode + 1) % this.Disease_Capacity;
+                i++;
             }
             return hashCode;
         }
@@ -140,7 +141,7 @@ namespace DS
                 this.Drugs_number ++;
                 if(!first_mode)
                 {
-                    int random_count = this.Rnd.Next(1, 9);
+                    int random_count = this.Rnd.Next(1, 50);
                     var interactions_drugs = new string[random_count];
                     int idx = 0;
                     List<int> indexes = new List<int>();
@@ -155,7 +156,7 @@ namespace DS
                     }
                     indexes.Clear();
                     idx = 0;
-                    random_count = this.Rnd.Next(1, 8);
+                    random_count = this.Rnd.Next(1, 30);
                     var Effective_diseases = new string[random_count];
                     for(int _ = 0; _ < Effective_diseases.Length; _++)
                     {
@@ -210,7 +211,7 @@ namespace DS
                 this.Disease_number ++;
                 if(!first_mode)
                 {
-                    int random_count = this.Rnd.Next(1, 5);
+                    int random_count = this.Rnd.Next(1, 15);
                     var Effective_drugs = new string[random_count];
                     int idx = 0;
                     List<int> indexes = new List<int>();
@@ -243,9 +244,9 @@ namespace DS
 
         public void Delete_Drug(string drug)
         {
-            long hashCode = this.Get_Drug_Index(drug);
             try
             {
+                long hashCode = this.Get_Drug_Index(drug);
                 var interactions_drugs = this.Drugs_With_Their_Interactions_Drug[hashCode].Value?.ToArray();
                 this.Drugs_With_Their_Interactions_Drug[hashCode] = new KeyValuePair<Drug, Dictionary<string, string>>(null, null);
                 this.Drugs_number--;
